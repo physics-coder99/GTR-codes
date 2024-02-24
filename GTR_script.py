@@ -129,10 +129,10 @@ class GTR:
                 co_ord:list['symbols'],
                 s:'SY.Symbol'= SY.Symbol('s')):
         Der = SY.Derivative
-        eqs = [SY.Eq( Der(co_ord[i],s,2) + 
+        eqs = [SY.Eq( Der(co_ord[i],s,2) , -
                     sum([crist[i][j][k]*Der(co_ord[j],s)*Der(co_ord[k],s)
                         for k in range(len(co_ord))
-                        for j in range(len(co_ord))]), 0)
+                        for j in range(len(co_ord))]))
                         for i in range(len(co_ord))]
         return eqs
 
