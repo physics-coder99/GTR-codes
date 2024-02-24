@@ -135,11 +135,28 @@ class GTR:
                         for j in range(len(co_ord))]))
                         for i in range(len(co_ord))]
         return eqs
+    
+    #trying to solve the geodesic equations
+    def solve_geodesic(self, 
+                       eqn : list[SY.core.relational.Equality],
+                       vars: list['SY.symbols'],
+                       param : 'SY.symbols' = SY.S('s')):
+        fn_list = [SY.Function(f'{v}') for v in vars]
+        sub_list = [(vars[i], fn_list[i](param)) 
+                    for i in range(len(vars))]
+        eqn = [e.subs(sub_list) for e in eqn]
+        vars = [v.subs(sub_list) for v in vars]
+        try:
+            soln = SY.dsolve(eqn, vars)
+        except NotImplementedError:
+            print("Could not find solution using sympy")
+        else:
+            SY.pprint(soln, use_unicode = True)
 
 # testing for a metric
 # metric should be given as a string and
 # for exact differentials(i.e, dx, dxdy, dr,... etc) use d as a function
 # like dx -> d(x), dy^2 ->  d(y)**2, ...etc
 if  __name__ == "__main__":
-    gtr = GTR("d(x)**2 + d(y)**2 + d(z)**2")
-    SY.pprint(gtr.geo_eq)
+    gtr = GTR("x**2*d(x)**2 + d(y)**2 + d(z)**2")
+    gtr.solve_geodesic(gtr.geo_eq, gtr.co_ords)
