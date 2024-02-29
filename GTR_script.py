@@ -36,6 +36,9 @@ class GTR:
         self.rieman = self.Riemann_tensor(self.christ, self.co_ords)
         self.parallel = self.par_trans(self.christ, self.co_ords)
         self.geo_eq = self.geodesics(self.christ, self.co_ords)
+        self.soln = self.solve_geodesic(self.geo_eq, self.co_ords)
+        self.cov_rieman = self.R_ijkl(self.rieman, 
+                                      self.g_cov, self.co_ords)
 
     # determining the co-ordinates
     def get_co_ords(self, metric:SY.core.add.Add):
@@ -139,24 +142,39 @@ class GTR:
     #trying to solve the geodesic equations
     def solve_geodesic(self, 
                        eqn : list[SY.core.relational.Equality],
-                       vars: list['SY.symbols'],
-                       param : 'SY.symbols' = SY.S('s')):
-        fn_list = [SY.Function(f'{v}') for v in vars]
-        sub_list = [(vars[i], fn_list[i](param)) 
-                    for i in range(len(vars))]
+                       co_ord: list['SY.symbols'],
+                       s : 'SY.symbols' = SY.S('s')):
+        fn_list = [SY.Function(f'{v}') for v in co_ord]
+        sub_list = [(co_ord[i], fn_list[i](s)) 
+                    for i in range(len(co_ord))]
         eqn = [e.subs(sub_list) for e in eqn]
-        vars = [v.subs(sub_list) for v in vars]
+        co_ord = [v.subs(sub_list) for v in co_ord]
         try:
-            soln = SY.dsolve(eqn, vars)
+            soln = SY.dsolve(eqn, co_ord)
         except NotImplementedError:
-            print("Could not find solution using sympy")
+            return ("Could not find solution using sympy")
         else:
-            SY.pprint(soln, use_unicode = True)
+            return soln
+    
+    # fully covariant Riemannian tensor
+    def R_ijkl(self, R_i_jkl:list[list[list[list['symbols']]]],
+               gcov :'SY.Matrix',
+               co_ord:list['symbols']):
+        gcov = SY.matrix2numpy(gcov)
+        r = [[[[
+            sum(
+                [gcov[i,m]*R_i_jkl[m][j][k][l] 
+                for m in range(len(co_ord))] )
+             for l in range(len(co_ord)) ]
+             for k in range(len(co_ord)) ]
+             for j in range(len(co_ord)) ]
+             for i in range(len(co_ord)) ]
+        return r
 
 # testing for a metric
 # metric should be given as a string and
 # for exact differentials(i.e, dx, dxdy, dr,... etc) use d as a function
 # like dx -> d(x), dy^2 ->  d(y)**2, ...etc
 if  __name__ == "__main__":
-    gtr = GTR("x**2*d(x)**2 + d(y)**2 + d(z)**2")
-    gtr.solve_geodesic(gtr.geo_eq, gtr.co_ords)
+    gtr = GTR('d(x)**2 + (sin(x)*d(t))**2')
+    print(gtr.cov_rieman)
