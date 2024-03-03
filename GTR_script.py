@@ -39,6 +39,8 @@ class GTR:
         self.soln = self.solve_geodesic(self.geo_eq, self.co_ords)
         self.cov_rieman = self.R_ijkl(self.rieman, 
                                       self.g_cov, self.co_ords)
+        self.Ricci = self.Ric_ij( self.rieman, self.dimension)
+        self.R = self.ricci = self.scalar_Ric(self.Ricci, self.g_con)
 
     # determining the co-ordinates
     def get_co_ords(self, metric:SY.core.add.Add):
@@ -170,6 +172,22 @@ class GTR:
              for j in range(len(co_ord)) ]
              for i in range(len(co_ord)) ]
         return r
+    
+    # Calculating Ricci Tensor from riemannian Tensor
+    def Ric_ij(self, R_i_jkl:list[list[list[list['symbols']]]],
+               dim : int):
+        Ric = [[sum([R_i_jkl[k][i][k][j] for k in range(dim)])
+                 for j in range(dim)]
+                 for i in range(dim)]
+        return Ric
+    
+    # Calculating Ricci Scaler
+    def scalar_Ric(self, Ric:list[list['symbols']],
+                   gcon :'SY.Matrix') -> 'symbols' :
+        gcon = SY.matrix2numpy(gcon)
+        R = [sum([gcon[i,j]*Ric[i][j] for j in range(len(Ric))])
+             for i in range(len(Ric))]
+        return sum(R)
 
 # testing for a metric
 # metric should be given as a string and
